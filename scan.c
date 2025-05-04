@@ -61,6 +61,11 @@ void slowScan()
 {
     cyBOT_init_Scan(0b0101);
 
+    //cyBOT_SERVO_cal();
+
+    right_calibration_value = 243250;
+    left_calibration_value = 1183000;
+
     cyBOT_Scan_t scan;
     float Ping;
     int IRValue;

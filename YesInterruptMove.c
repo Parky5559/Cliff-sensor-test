@@ -198,6 +198,46 @@ int main(void) {
                 pleaseScan = 1;
                 currentDegree = 90;
                 break;
+            case '9':
+                if (currentDegree <= 90)
+                {
+                    double angle_turned = 0.0;
+                    sensor_data->angle = 0;
+                    oi_setWheels(25, -25);
+                    while (angle_turned < 90.0) {
+                        timer_waitMillis(10);
+                        oi_update(sensor_data);
+                        angle_turned += fabs(sensor_data->angle);
+                    }
+                    oi_setWheels(0, 0);
+                    currentDegree += 90.0;
+                    if (currentDegree > 180.0) currentDegree = 180.0;
+                    lcd_printf("Turning Left 90: %.1lf", currentDegree);
+
+                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", currentDegree, sum, getMaxDistance());
+                    uart_sendStr(sendAngle);
+                }
+                break;
+            case '0':
+                if (currentDegree >= -180.0)
+                {
+                    double angle_turned = 0.0;
+                    sensor_data->angle = 0;
+                    oi_setWheels(-25, 25);
+                    while (angle_turned < 90.0) {
+                        timer_waitMillis(10);
+                        oi_update(sensor_data);
+                        angle_turned += fabs(sensor_data->angle);
+                    }
+                    oi_setWheels(0, 0);
+                    currentDegree -= 90.0;
+                    if (currentDegree < -180.0) currentDegree = 90.0;
+                    lcd_printf("Turning Right 90: %.1lf", currentDegree);
+
+                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", currentDegree, sum, getMaxDistance());
+                    uart_sendStr(sendAngle);
+                }
+                break;
             default:
                 oi_setWheels(0, 0);
                 break;
