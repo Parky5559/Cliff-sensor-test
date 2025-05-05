@@ -85,7 +85,7 @@ void slowScan()
 
 
     //char data[20];
-    for(degree = 75; degree <= 115; degree+=3)
+    for(degree = 75; degree <= 105; degree+=3)
     {
         setMaxDistance(0);
 
