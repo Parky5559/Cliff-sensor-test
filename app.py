@@ -55,36 +55,26 @@ def receive_data():
         lines = data.decode(errors="ignore").strip().split('\n')
         for line in lines:
             if line.startswith('Min Degree:'):
-                print("Received:", line)  # Debug print
                 try:
                     parts = line.split(',')
-
-                    min_part = parts[0].split()
-                    min_deg = int(min_part[2])
-                    max_deg = int(min_part[4])
+                    min_deg = int(parts[0].split()[2])
+                    max_deg = int(parts[0].split()[4])
                     ir_cm = float(parts[1].split(':')[1].strip())
                     midpoint = int(parts[2].split(':')[1].strip())
                     width = float(parts[3].split(':')[1].strip())
 
-                    if width < 5:
-                        size = 'small'
-                    elif width < 15:
-                        size = 'medium'
-                    else:
-                        size = 'large'
+                    size = 'small' if width < 5 else 'medium' if width < 15 else 'large'
 
                     degree.append(math.radians(midpoint))
-                    rarr.append(int(ir_cm))
+                    rarr.append(ir_cm)
                     sizearr.append(size)
-
                     min_degrees.append(math.radians(min_deg))
                     max_degrees.append(math.radians(max_deg))
-
                     path_angles.append(math.radians(midpoint))
                     path_dists.append(ir_cm)
                 except Exception as e:
-                    print("\u274c Parse error:", line)
-                    print("\u2757 Exception:", e)
+                    print("❌ Parse error:", line)
+                    print("‼️ Exception:", e)
             else:
                 print(line)
 
@@ -96,37 +86,64 @@ fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
 
 def get_color(size):
-    if size.lower() == 'small':
-        return 'green'
-    elif size.lower() == 'medium':
-        return 'orange'
-    else:
-        return 'red'
+    return {'small': 'green', 'medium': 'orange', 'large': 'red'}.get(size.lower(), 'gray')
 
 def animate(i):
     ax.clear()
     ax.set_rlabel_position(-22.5)
-    ax.set_title("R2D2 Radar System", va='bottom')
+    ax.set_title("Roomba Radar System", va='bottom')
     ax.set_thetamin(0)
     ax.set_thetamax(180)
-    ax.set_rmax(70)
+    ax.set_rmax(100)
 
-    # Draw object angular outlines2
-    for angle_min, angle_max, dist in zip(min_degrees, max_degrees, rarr):
-        arc_angles = np.linspace(angle_min, angle_max, 50)
-        arc_radii = [dist] * len(arc_angles)
-        ax.plot(arc_angles, arc_radii, color='gray', linewidth=1.5, alpha=0.6)
+    # Draw Roomba at origin
+    ax.scatter(0, 0, color='black', s=100, label='Roomba')
 
-    # Plot midpoints with size color
-    for angle, dist, size in zip(degree, rarr, sizearr):
-        ax.scatter(angle, dist, color=get_color(size), s=80, alpha=0.7)
+    # Roomba width line (35cm across origin at 90° and 270°)
+    roomba_half_width = 17.5  # Half of 35cm
+    width_line_angles = [math.radians(90), math.radians(270)]
+    width_line_radii = [roomba_half_width, roomba_half_width]
+    ax.plot(width_line_angles, width_line_radii, color='black', linewidth=3.5, alpha=0.8, label='Roomba Width')
+
+    max_dist = 0
+    max_angle = 0
+
+    # Draw each object
+    for angle, dist, size, a_min, a_max in zip(degree, rarr, sizearr, min_degrees, max_degrees):
+        color = get_color(size)
+
+        # Line from Roomba to object
+        ax.plot([0, angle], [0, dist], linestyle='-', color='purple', linewidth=2.5, alpha=0.6)
+
+        # Object marker
+        ax.scatter(angle, dist, color=color, s=80, alpha=0.8)
+
+        # Label angle and distance
         angle_deg = round(math.degrees(angle))
-        ax.text(angle, dist + 10, f"{angle_deg}\u00b0\n{dist}cm", fontsize=6, ha='center')
+        dist_txt = round(dist, 2)
+        ax.text(angle, dist + 5, f"{angle_deg}°\n{dist_txt}cm\n{size}", fontsize=6, ha='center')
 
-    # Plot motion path
+        # Width line across min-max angles
+        width_arc = np.linspace(a_min, a_max, 30)
+        width_radii = [dist] * len(width_arc)
+        ax.plot(width_arc, width_radii, color='gray', linewidth=2.0, alpha=0.4)
+
+        # Update max distance
+        if dist > max_dist:
+            max_dist = dist
+            max_angle = angle
+
+    # Max distance line
+    if max_dist > 0:
+        ax.plot([0, max_angle], [0, max_dist], linestyle='--', color='cyan', linewidth=2, label='Max Distance')
+
+    # Motion path
     if len(path_angles) > 1:
-        ax.plot(path_angles, path_dists, linestyle=':', color='blue', linewidth=1, alpha=0.4)
+        ax.plot(path_angles, path_dists, linestyle=':', color='blue', linewidth=1, alpha=0.5)
 
+    ax.legend(loc='upper right', fontsize=6)
+
+# Animate and run
 ani = animation.FuncAnimation(fig, animate, interval=500)
 
 plt.show()

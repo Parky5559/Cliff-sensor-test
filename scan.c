@@ -15,7 +15,7 @@
 #include <math.h>
 
 
-int maxDistance = 1;
+int maxDistance = 70;
 
 void setMaxDistance(int maxDist)
 {
@@ -57,7 +57,221 @@ typedef struct
 
 ObjectData *detectedObject = NULL;
 
-void slowScan()
+void shortScan()
+{
+    cyBOT_init_Scan(0b0101);
+
+    cyBOT_Scan_t scan;
+    //float Ping;
+    int IRValue;
+    int degree;
+    int objectCount = 0;
+
+    int inObject = 0;
+
+    int temp;
+
+
+    int minIndex = 0;
+
+    int IRscan[3];
+    int IRtotal;
+
+    float currentMinIR = 9999.0;
+
+
+    //char data[20];
+    for(degree = 75; degree <= 105; degree++)
+    {
+        //setMaxDistance(0);
+
+        cyBOT_Scan(degree, &scan);
+        int j;
+        IRscan[0] = scan.IR_raw_val;
+
+        for(j = 1; j < 3; j++)
+        {
+            cyBOT_Scan(degree, &scan);
+            IRscan[j] =  scan.IR_raw_val;
+        }
+
+        IRtotal = IRscan[0] + IRscan[1] + IRscan[2];
+
+        IRValue = IRtotal / 3;
+
+
+
+
+
+        float IR_cm = IR_to_cm(IRValue);
+
+        //if(IRValue > 1000 && Ping < 70)
+        if(IR_cm > 0 && IR_cm <= 70)
+        {
+            //Object Detect
+            uart_sendChar('1');
+
+            if (!inObject)
+            {
+                currentMinIR = 9999;
+
+                detectedObject = realloc(detectedObject, (objectCount + 1) * sizeof(*detectedObject));
+                detectedObject[objectCount].minDegree = degree;
+                detectedObject[objectCount].maxDegree = degree;
+
+
+
+
+
+                inObject = 1;
+                objectCount++;
+
+            }
+            else
+            {
+                detectedObject[objectCount - 1].maxDegree = degree;
+
+            }
+
+            if (IR_cm < currentMinIR)
+            {
+                currentMinIR = IR_cm;
+            }
+
+
+
+        }
+        else
+        {
+            //leaving object
+            inObject = 0;
+            uart_sendChar('0');
+
+
+            if(objectCount > 0)
+            {
+                int i = objectCount - 1;
+                temp = detectedObject[i].maxDegree - detectedObject[i].minDegree;
+                detectedObject[i].Irsensor = currentMinIR;
+                detectedObject[i].objectWidth = calculateLinearWidth(currentMinIR, temp);
+
+
+                detectedObject[i].midPoint = (detectedObject[i].minDegree + detectedObject[i].maxDegree) / 2;
+            }
+
+
+        }
+
+
+        //After 180 ping
+
+
+
+
+
+
+
+        int i;
+        //float smallestWidth = 9999.0;
+
+
+        int length = objectCount;
+
+        for(i = 0; i < length; i++)
+        {
+
+            if(detectedObject[i].objectWidth < detectedObject[minIndex].objectWidth)
+            {
+                minIndex = i;
+
+            }
+
+        }
+
+
+
+
+    }
+
+
+    if (inObject && objectCount > 0)
+    {
+        int i = objectCount - 1;
+        int temp = detectedObject[i].maxDegree - detectedObject[i].minDegree;
+        detectedObject[i].Irsensor = currentMinIR;
+
+        if (currentMinIR < 9999 && currentMinIR > 0)
+            detectedObject[i].objectWidth = calculateLinearWidth(currentMinIR, temp);
+        else
+            detectedObject[i].objectWidth = 0;
+
+        detectedObject[i].midPoint = (detectedObject[i].minDegree + detectedObject[i].maxDegree) / 2;
+    }
+
+
+
+    uart_sendChar('\n');
+    uart_sendChar('\r');
+
+    //int b
+
+    char Buffer[200];
+
+    int b;
+    int min = 9999;
+
+    for(b = 0; b < objectCount; b++)
+    {
+        //pringing object data
+        sprintf(Buffer, "Min Degree: %d MaxDegree: %d, Irsensor: %f, Midpoint: %d, ObjectWidth: %f",
+                detectedObject[b].minDegree, detectedObject[b].maxDegree, detectedObject[b].Irsensor, detectedObject[b].midPoint, detectedObject[b].objectWidth);
+
+        uart_sendStr(Buffer);
+
+        uart_sendChar('\n');
+        uart_sendChar('\r');
+
+
+
+        //GOOD LUCH
+        if(detectedObject[b].Irsensor < min && objectCount != 0)
+        {
+            setMaxDistance(detectedObject[b].Irsensor);
+        }
+
+
+
+
+
+        //determining final object
+        if(detectedObject[b].objectWidth >= 17)
+        {
+            char FoundObject[20];
+            sprintf(FoundObject, "Found! Angle: %d", detectedObject[b].midPoint);
+            uart_sendStr(FoundObject);
+        }
+
+
+    }
+
+    //making sure that if no object is seen then objectDistance is 70 for distance it can move
+
+    if(objectCount == 0)
+    {
+        uart_sendStr("Clear to go straight min distance");
+        setMaxDistance(70);
+    }
+    else
+    {
+        uart_sendStr("Cannot go straight object in path");
+    }
+
+
+
+}
+
+
+void longScan()
 {
     cyBOT_init_Scan(0b0101);
 
@@ -67,7 +281,7 @@ void slowScan()
     left_calibration_value = 1183000;
 
     cyBOT_Scan_t scan;
-    float Ping;
+    //float Ping;
     int IRValue;
     int degree;
     int objectCount = 0;
@@ -92,7 +306,7 @@ void slowScan()
     //char data[20];
     for(degree = 1; degree <= 180; degree+=3)
     {
-        setMaxDistance(0);
+        //setMaxDistance(0);
 
         cyBOT_Scan(degree, &scan);
         int j;
@@ -294,9 +508,25 @@ void slowScan()
 
 
         //GOOD LUCH
-        if(detectedObject[b].Irsensor < min)
+        if(detectedObject[b].Irsensor < min && objectCount != 0)
         {
             setMaxDistance(detectedObject[b].Irsensor);
+        }
+
+
+
+        //determining final object
+        if(detectedObject[b].objectWidth >= 17)
+        {
+            char FoundObject[20];
+            sprintf(FoundObject, "Found! Angle: %d", detectedObject[b].midPoint);
+            uart_sendStr(FoundObject);
+        }
+
+        //making sure that if no object is seen then objectDistance is 70 for distance it can move
+        if(objectCount == 0)
+        {
+            setMaxDistance(70);
         }
     }
 

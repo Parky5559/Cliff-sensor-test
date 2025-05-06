@@ -7,30 +7,7 @@
 volatile char received_char;
 
 
-void fastScan()
-{
-    cyBOT_init_Scan(0b0111);
 
-    adc_init();
-    oi_t *sensor_data = oi_alloc();
-    oi_init(sensor_data);
-
-
-    cyBOT_Scan_t scan;
-
-    int minDegree = 60;
-    int maxDegree = 120;
-
-    int i;
-
-    uart_sendStr("Went in the function");
-
-    for(i = minDegree; i <= maxDegree; i++)
-    {
-        cyBOT_Scan(i, &scan);
-    }
-
-}
 
 
 int boundary_detect(oi_t *sensor_data) {
@@ -148,7 +125,7 @@ int main(void) {
                 case 'a':
                 if (currentDegree < 180.0) {
                     double angle_turned = 0.0;
-                    sensor_data->angle = 0;  // reset any leftover angle
+                    sensor_data->angle = 0;
                     oi_setWheels(25, -25);
                     while (angle_turned < 1.0) {
                         timer_waitMillis(10);
@@ -158,12 +135,18 @@ int main(void) {
                     oi_setWheels(0, 0);
                     currentDegree += 1.0;
                     if (currentDegree > 180.0) currentDegree = 180.0;
-                    lcd_printf("Turning Left: %.1lf", currentDegree);
-
-                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", currentDegree, sum, getMaxDistance());
+            
+                    double displayedDegree = ((currentDegree - 60.0) * (180.0 / 61.0));
+                    if (displayedDegree < 0) displayedDegree = 0;
+                    if (displayedDegree > 180) displayedDegree = 180;
+            
+                    lcd_printf("Turning Left: %.1lf", displayedDegree);
+                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", displayedDegree, sum, getMaxDistance());
                     uart_sendStr(sendAngle);
                 }
                 break;
+            
+            
             
             
 
@@ -180,21 +163,28 @@ int main(void) {
                     oi_setWheels(0, 0);
                     currentDegree -= 1.0;
                     if (currentDegree < 0.0) currentDegree = 0.0;
-                    lcd_printf("Turning Right: %.1lf", currentDegree);
-
-                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", currentDegree, sum, getMaxDistance());
+            
+                    double displayedDegree = ((currentDegree - 60.0) * (180.0 / 61.0));
+                    if (displayedDegree < 0) displayedDegree = 0;
+                    if (displayedDegree > 180) displayedDegree = 180;
+            
+                    lcd_printf("Turning Right: %.1lf", displayedDegree);
+                    sprintf(sendAngle, "Angle: %0.2lf, Distance Moved: %d, Max Distance: %d", displayedDegree, sum, getMaxDistance());
                     uart_sendStr(sendAngle);
                 }
                 break;
             
             
+            
+            
             case '1':
                 //short scan
                 //fastScan();
+                shortScan();
                 break;
             case '2':
                 //long scan
-                slowScan();
+                longScan();
                 pleaseScan = 1;
                 currentDegree = 90;
                 break;

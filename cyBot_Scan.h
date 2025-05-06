@@ -65,7 +65,8 @@ void cyBOT_Scan(int angle, cyBOT_Scan_t* getScan);
 unsigned int cyBOT_scan_version(void);
 
 
-void slowScan();
+void longScan();
+void shortScan();
 int IrToMeters(int adc_value);
 ////////////////////////////////////////////
 //// Calibrate physical CyBOT            ///
