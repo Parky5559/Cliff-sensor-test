@@ -95,7 +95,7 @@ void shortScan()
 
 
     //char data[20];
-    for(degree = 75; degree <= 105; degree++)
+    for(degree = 70; degree <= 110; degree++)
     {
         //setMaxDistance(0);
 

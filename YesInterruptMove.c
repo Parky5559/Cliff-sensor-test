@@ -181,8 +181,10 @@ int main(void) {
 
                     if(sum < getMaxDistance() && pleaseScan)
                     {
-                        oi_setWheels(25, 25);
+                        //sensor_data->distance = 0;
+                        oi_setWheels(150, 150);
                         sum += sensor_data->distance;
+                        oi_update(sensor_data);
                         //uart_sendChar((char)sum);
                         lcd_printf("%d", sum);
                         char newThing[3];
