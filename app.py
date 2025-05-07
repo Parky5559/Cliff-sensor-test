@@ -54,6 +54,8 @@ def receive_data():
             break
         lines = data.decode(errors="ignore").strip().split('\n')
         for line in lines:
+            print(f"📥 Received: {line}")  # Always print every line to terminal
+
             if line.startswith('Min Degree:'):
                 try:
                     parts = line.split(',')
@@ -75,8 +77,6 @@ def receive_data():
                 except Exception as e:
                     print("❌ Parse error:", line)
                     print("‼️ Exception:", e)
-            else:
-                print(line)
 
 receive_thread = threading.Thread(target=receive_data)
 receive_thread.start()
@@ -99,11 +99,11 @@ def animate(i):
     # Draw Roomba at origin
     ax.scatter(0, 0, color='black', s=100, label='Roomba')
 
-    # Roomba width line (35cm across origin at 90° and 270°)
+    # Roomba width line (35cm across origin, horizontal)
     roomba_half_width = 17.5  # Half of 35cm
-    width_line_angles = [math.radians(90), math.radians(270)]
+    width_line_angles = [math.radians(0), math.radians(180)]
     width_line_radii = [roomba_half_width, roomba_half_width]
-    ax.plot(width_line_angles, width_line_radii, color='black', linewidth=3.5, alpha=0.8, label='Roomba Width')
+    ax.plot(width_line_angles, width_line_radii, color='Red', linewidth=3.5, alpha=1.0, label='Roomba Width')
 
     max_dist = 0
     max_angle = 0

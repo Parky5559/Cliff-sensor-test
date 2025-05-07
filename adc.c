@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <inc/tm4c123gh6pm.h>
 #include "adc.h"
+#include "cyBot_Scan.h"
 
 void adc_init(void)
 {

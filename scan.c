@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include "adc.h"
 
 
 int maxDistance = 70;
@@ -36,12 +37,20 @@ float IR_to_cm(uint16_t irVal)
 //        return 81;
 //    }
 
-    if(irVal <= 80)
+//    if(irVal <= 80)
+//    {
+//        irVal = 81;
+//    }
+//
+//    return (67870.0f) / (irVal - 40);
+
+    if(irVal <= 450)
     {
-        irVal = 81;
+        return 9999.0f;
     }
 
-    return (67870.0f) / (irVal - 40);
+    float average = (float)irVal;
+    return 120000.0f * powf(average, -1.23f);
 }
 
 
@@ -60,6 +69,11 @@ ObjectData *detectedObject = NULL;
 void shortScan()
 {
     cyBOT_init_Scan(0b0101);
+
+    adc_init();
+
+    right_calibration_value = 274750;
+    left_calibration_value = 1214500;
 
     cyBOT_Scan_t scan;
     //float Ping;
@@ -87,12 +101,13 @@ void shortScan()
 
         cyBOT_Scan(degree, &scan);
         int j;
-        IRscan[0] = scan.IR_raw_val;
+        IRscan[0] = adc_read();
 
         for(j = 1; j < 3; j++)
         {
-            cyBOT_Scan(degree, &scan);
-            IRscan[j] =  scan.IR_raw_val;
+//            cyBOT_Scan(degree, &scan);
+//            IRscan[j] =  scan.IR_raw_val;
+            IRscan[j] = adc_read();
         }
 
         IRtotal = IRscan[0] + IRscan[1] + IRscan[2];
@@ -109,7 +124,10 @@ void shortScan()
         if(IR_cm > 0 && IR_cm <= 70)
         {
             //Object Detect
+            //char Test[20];
+            //sprintf(Test, "CM VAL %f", IR_cm);
             uart_sendChar('1');
+            //uart_sendStr(Test);
 
             if (!inObject)
             {
@@ -244,7 +262,7 @@ void shortScan()
 
 
         //determining final object
-        if(detectedObject[b].objectWidth >= 17)
+        if(detectedObject[b].objectWidth >= 18.5)
         {
             char FoundObject[20];
             sprintf(FoundObject, "Found! Angle: %d", detectedObject[b].midPoint);
@@ -260,25 +278,28 @@ void shortScan()
     {
         uart_sendStr("Clear to go straight min distance");
         setMaxDistance(70);
+        uart_sendChar('\n');
+        uart_sendChar('\r');
     }
     else
     {
         uart_sendStr("Cannot go straight object in path");
+        uart_sendChar('\n');
+        uart_sendChar('\r');
     }
-
-
-
 }
+
 
 
 void longScan()
 {
     cyBOT_init_Scan(0b0101);
+    adc_init();
 
     //cyBOT_SERVO_cal();
 
-    right_calibration_value = 243250;
-    left_calibration_value = 1183000;
+    right_calibration_value = 274750;
+    left_calibration_value = 1214500;
 
     cyBOT_Scan_t scan;
     //float Ping;
@@ -310,12 +331,12 @@ void longScan()
 
         cyBOT_Scan(degree, &scan);
         int j;
-        IRscan[0] = scan.IR_raw_val;
+        IRscan[0] = adc_read();
 
         for(j = 1; j < 3; j++)
         {
-            cyBOT_Scan(degree, &scan);
-            IRscan[j] =  scan.IR_raw_val;
+            //cyBOT_Scan(degree, &scan);
+            IRscan[j] =  adc_read();
         }
 
 //        for(j = 0; j < 3; j++)
@@ -326,7 +347,6 @@ void longScan()
         IRtotal = IRscan[0] + IRscan[1] + IRscan[2];
 
         IRValue = IRtotal / 3;
-
 
 
         //setting final value
@@ -516,11 +536,13 @@ void longScan()
 
 
         //determining final object
-        if(detectedObject[b].objectWidth >= 17)
+        if(detectedObject[b].objectWidth >= 9.5)
         {
             char FoundObject[20];
             sprintf(FoundObject, "Found! Angle: %d", detectedObject[b].midPoint);
             uart_sendStr(FoundObject);
+            uart_sendChar('\n');
+            uart_sendChar('\r');
         }
 
         //making sure that if no object is seen then objectDistance is 70 for distance it can move
