@@ -262,7 +262,7 @@ void shortScan()
 
 
         //determining final object
-        if(detectedObject[b].objectWidth >= 18.5)
+        if(detectedObject[b].objectWidth >= 10 && detectedObject[b].objectWidth < 15)
         {
             char FoundObject[20];
             sprintf(FoundObject, "Found! Angle: %d", detectedObject[b].midPoint);
