@@ -73,7 +73,7 @@ void shortScan()
     adc_init();
 
     right_calibration_value = 274750;
-    left_calibration_value = 1214500;
+    left_calibration_value = 1230250;
 
     cyBOT_Scan_t scan;
     //float Ping;
@@ -299,7 +299,7 @@ void longScan()
     //cyBOT_SERVO_cal();
 
     right_calibration_value = 274750;
-    left_calibration_value = 1214500;
+    left_calibration_value = 1230250;
 
     cyBOT_Scan_t scan;
     //float Ping;
